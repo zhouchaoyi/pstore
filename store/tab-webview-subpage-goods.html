@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<link rel="stylesheet" type="text/css" href="../css/mui.picker.min.css" />  
+		<style>
+			html,
+			body {
+				background-color: #efeff4;
+			}
+			.title {
+				padding: 20px 15px 10px;
+				color: #6d6d72;
+				font-size: 15px;
+				background-color: #fff;
+			}
+			.mui-navigate-right {
+				position:relative;
+			}
+			.mui-navigate-right span{
+				position:absolute; 
+				right:40px;
+			}
+		</style>
+	</head>
+
+	<body>
+		
+		<div id="pullrefresh" class="mui-content mui-scroll-wrapper">
+			<div class="mui-scroll">  
+				<div class="title">
+					<div class="">
+						<input type="search" id="searchText" class="mui-input-clear" style="width:260px" placeholder="可按物品名称搜索">
+						<button type="button" class="mui-btn mui-btn-primary mui-btn-outlined" onclick="search()">搜索</button>
+					</div>
+					<div>
+						<!--<div class="mui-input-row" style="">
+							<label style="font-size:17px">类别筛选：</label>  
+							<select id="goodsType" name="goodsType" onchange="goodsType_onchange()"> 
+								<option value="">全部类别</option>
+							</select>
+						</div>-->  
+						<button type="button" class="mui-btn mui-btn-primary" onclick="addGoods()">新增</button>  
+						<input id='showTypePicker' class="mui-btn" type='button' style="margin-left: 40px;width:200px" value="类别筛选：全部类别" typeId=""/>
+						
+					</div>
+				</div>
+				<ul id="goodsList" class="mui-table-view mui-table-view-chevron"></ul>  
+			</div>
+		</div>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/mui.picker.min.js"></script>
+		<script src="../js/app.js"></script>
+		<script>
+			mui.init({
+				swipeBack: false,
+				pullRefresh: {
+					container: '#pullrefresh',
+					up: {
+						contentrefresh: '正在加载...',
+						callback: pullupRefresh
+					}
+				}
+			});
+			
+			var goodsType="";
+			var goodsTypeNm="";
+			var keyword="";
+			mui.plusReady(function(){
+				goodsType=getQueryString("goodsType");
+				goodsTypeNm=getQueryString("goodsTypeNm");
+				if(null==goodsType) {
+					goodsType="";
+				}else {
+					document.getElementById("showTypePicker").typeId=goodsType;
+					document.getElementById("showTypePicker").value=decodeURI(goodsTypeNm);
+				}
+				keyword=getQueryString("keyword");
+				if(null==keyword) {
+					keyword="";
+				}else {
+					keyword=decodeURI(keyword);
+					document.getElementById("searchText").value=keyword;
+				}
+				var typePicker =new mui.PopPicker();
+				var showTypePickerButton = document.getElementById('showTypePicker');
+				showTypePickerButton.addEventListener('tap', function(event) {
+					typePicker.show(function(items) {
+						showTypePickerButton.value="类别筛选："+items[0].text;
+						showTypePickerButton.typeId=items[0].value;
+						goodsType_onchange();
+						//返回 false 可以阻止选择框的关闭
+						//return false;
+					});
+				}, false);
+//				console.log("goodsType="+goodsType); 
+//				console.log("keyword="+keyword);
+				var sTypeStr = JSON.parse(plus.storage.getItem("goodsType"));
+				
+				if(sTypeStr!=null) {
+					//console.log("有缓存<<<<<");
+					typePicker.setData(sTypeStr);
+					listGoods();
+				}else {
+					//console.log("无缓存<<<<<");
+					//获取物品的类别
+					mui.ajax(host+'storeMgmt/listGoodsType',{
+						dataType:'json',//服务器返回json格式数据
+						type:'get',//HTTP请求类型
+						success:function(data){
+							var typeList=[];
+							var obj={};
+							obj.value="";
+							obj.text="全部类别";
+							typeList[0]=obj;
+							for(var i=0;i<data.data.length;i++) {
+								var object={};
+								object.value=data.data[i].type_id;
+								object.text=data.data[i].type_nm;
+								typeList[i+1]=object;
+							}
+							typePicker.setData(typeList);
+							//将类别缓存起来
+							plus.storage.setItem("goodsType",JSON.stringify(typeList));
+							listGoods();
+						},
+						error:function(xhr,type,errorThrown){     
+							//异常处理；
+							console.log(type);   
+						}
+					});
+				}
+				
+			});
+			
+			//console.log(host+'storeMgmt/listGoods');
+			//获取物品列表
+			function listGoods() {
+				var typeId=document.getElementById("showTypePicker").typeId;
+				if(typeId==undefined||typeId==null) {
+					typeId="";
+				}
+				mui.ajax(host+'storeMgmt/listGoods',{
+					data:{
+						pageSize:12,
+						currentPage:1,
+						type_id:typeId,  
+						keyword:encodeURIComponent(keyword)
+					},
+					dataType:'json',//服务器返回json格式数据
+					type:'get',//HTTP请求类型
+					success:function(data){
+						var table = document.body.querySelector('.mui-table-view');
+						for(var i=0;i<data.data.list.length;i++) {
+							var str=data.data.list[i].goods_price;
+							var len=str.length;
+							if(str.indexOf(".0")==len-2) {
+								data.data.list[i].goods_price=str.substring(0,len-2);
+							}
+							str=data.data.list[i].low_price;
+							len=str.length;
+							if(str.indexOf(".0")==len-2) {
+								data.data.list[i].low_price=str.substring(0,len-2);
+							}
+							var li = document.createElement('li');
+							li.className = 'mui-table-view-cell';
+							li.innerHTML = '<a class="mui-navigate-right" href="javascript:editGoods(\''+data.data.list[i].goods_id+'\',\''+data.data.list[i].goods_name+'\',\''+data.data.list[i].type_id+'\',\''+data.data.list[i].type_nm+'\',\''+data.data.list[i].goods_price+'\',\''+data.data.list[i].low_price+'\',\''+data.data.list[i].remark+'\')"><font color=gray>['+data.data.list[i].type_nm+']</font>&nbsp;' +data.data.list[i].goods_name+
+							'<span>'+data.data.list[i].goods_price+'元</span></a>';  
+							table.appendChild(li);    
+						}
+						
+					},
+					error:function(xhr,type,errorThrown){     
+						//异常处理；
+						console.log(type);   
+					}
+				});
+			}
+			
+			function editGoods(goods_id,goods_name,type_id,type_nm,goods_price,low_price,remark) {
+//				console.log(goods_id);
+//				console.log(goods_name);
+//				console.log(type_id);
+//				console.log(goods_price);
+//				console.log(low_price);
+//				console.log(remark);
+				mui.openWindow({
+				    url: 'goods_edit.html', 
+				    id:'goods_edit',
+					extras:{
+				        goods_id:goods_id,
+				        goods_name:goods_name,
+				        type_id:type_id,
+				        type_nm:type_nm,
+				        goods_price:goods_price,
+				        low_price:low_price,
+				        remark:remark
+					},
+					createNew:true
+				});
+			}
+			
+			function addGoods() {
+				var typeId=document.getElementById("showTypePicker").typeId;
+				var typeNm=document.getElementById("showTypePicker").value;
+				typeNm=typeNm.substring(5);
+				if(typeId==undefined||typeId==null) {
+					typeId="";
+				}
+				mui.openWindow({
+				    url: 'goods_edit.html', 
+				    id:'goods_edit',
+				    extras:{
+				        type_id:typeId,
+				        type_nm:typeNm
+					},
+				    createNew:true   
+				});
+			}
+			
+			function goodsType_onchange() {
+				var typeId=document.getElementById("showTypePicker").typeId;
+				if(typeId==undefined||typeId==null) {
+					typeId="";
+				}
+				var goodsType=typeId;
+				var goodsTypeNm=document.getElementById("showTypePicker").value;
+				var searchText=document.getElementById("searchText").value;
+				//alert(goodsType);
+				var url="tab-webview-subpage-goods.html";
+				url+="?goodsType="+goodsType+"&keyword="+encodeURIComponent(encodeURIComponent(trimStr(searchText)))+"&goodsTypeNm="+encodeURIComponent(encodeURIComponent(trimStr(goodsTypeNm)));
+				plus.webview.currentWebview().loadURL(url);    
+			}
+			
+			function search() {
+				goodsType_onchange();
+			}
+			
+			function getQueryString(name) {
+				var url=plus.webview.currentWebview().getURL();
+				url=url.substr(url.indexOf("?")+1);
+			     var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+			     var r = url.match(reg);
+			     if(r!=null)return  unescape(r[2]); return null;
+			}
+			
+			function trimStr(str){
+				return str.replace(/(^\s*)|(\s*$)/g,"");
+			}
+			
+			
+			var count = 1;
+			/**
+			 * 上拉加载具体业务实现
+			 */
+			function pullupRefresh() {
+				var typeId=document.getElementById("showTypePicker").typeId;
+				if(typeId==undefined||typeId==null) {
+					typeId="";
+				}
+				setTimeout(function() {
+					mui.ajax(host+'storeMgmt/listGoods',{
+						data:{
+							pageSize:12,
+							currentPage:++count,
+							type_id:typeId,  
+							keyword:keyword
+						},
+						dataType:'json',//服务器返回json格式数据
+						type:'get',//HTTP请求类型
+						success:function(data){  
+							//console.log("totalPageNum="+data.data.totalPageNum);
+							var table = document.body.querySelector('.mui-table-view');
+							for(var i=0;i<data.data.list.length;i++) {
+								var str=data.data.list[i].goods_price;
+								var len=str.length;
+								if(str.indexOf(".0")==len-2) {
+									data.data.list[i].goods_price=str.substring(0,len-2);
+								}
+								str=data.data.list[i].low_price;
+								len=str.length;
+								if(str.indexOf(".0")==len-2) {
+									data.data.list[i].low_price=str.substring(0,len-2);
+								}
+								var li = document.createElement('li');
+								li.className = 'mui-table-view-cell';
+								li.innerHTML = '<a class="mui-navigate-right" href="javascript:editGoods(\''+data.data.list[i].goods_id+'\',\''+data.data.list[i].goods_name+'\',\''+data.data.list[i].type_id+'\',\''+data.data.list[i].type_nm+'\',\''+data.data.list[i].goods_price+'\',\''+data.data.list[i].low_price+'\',\''+data.data.list[i].remark+'\')"><font color=gray>['+data.data.list[i].type_nm+']</font>&nbsp;' +data.data.list[i].goods_name+
+								'<span style="padding-left:50px">'+data.data.list[i].goods_price+'元</span></a>';  
+								table.appendChild(li);        
+							}
+							mui('#pullrefresh').pullRefresh().endPullupToRefresh((count > data.data.totalPageNum)); //参数为true代表没有更多数据了。
+						},
+						error:function(xhr,type,errorThrown){       
+							//异常处理；
+							console.log(type);   
+						}
+					});
+					
+				}, 1000);
+			}
+		</script>
+	</body>
+</html>
