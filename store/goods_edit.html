@@ -48,6 +48,12 @@
 						<label>备注</label>
 						<input type="text" id="remark" name="remark" class="mui-input-clear">
 					</div>  
+					<div class="mui-input-row">
+						<label>照片</label>
+						<span id="takePhoto" class="mui-icon mui-icon-camera" style="font-size: 40px;color:dodgerblue"></span><span style="color:lightgray">(点此拍照)</span>
+					</div>
+					<br>
+					<br>
 					<div class="mui-button-row">
 						<button type="button" class="mui-btn mui-btn-primary" onclick="doSubmit()">确认</button>&nbsp;&nbsp;
 						<button type="button" class="mui-btn mui-btn-danger" style="display:none" onclick="doDelete()">删除</button>
@@ -97,6 +103,23 @@
 						showTypePickerButton.value=items[0].text;
 						showTypePickerButton.typeId=items[0].value;
 					});
+				}, false);
+				
+				//拍照
+				var takePhoto = document.getElementById("takePhoto");
+				takePhoto.addEventListener('tap', function(event) {  
+					console.log( "开始拍照：" );
+					var cmr = plus.camera.getCamera();
+					cmr.captureImage( function ( p ) {
+						console.log( "成功："+p );
+						plus.io.resolveLocalFileSystemURL( p, function ( entry ) {
+							console.log(entry.fullPath)
+						}, function ( e ) {
+							console.log( "读取拍照文件错误："+e.message );
+						} );
+					}, function ( e ) {
+						console.log( "失败："+e.message );
+					}, {filename:"_doc/camera/",index:1} );
 				}, false);
 				
 				var sTypeStr = JSON.parse(plus.storage.getItem("goodsType"));
