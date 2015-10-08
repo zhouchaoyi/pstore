@@ -170,7 +170,7 @@
 							}
 							var li = document.createElement('li');
 							li.className = 'mui-table-view-cell';
-							li.innerHTML = '<a class="mui-navigate-right" href="javascript:editGoods(\''+data.data.list[i].goods_id+'\',\''+data.data.list[i].goods_name+'\',\''+data.data.list[i].type_id+'\',\''+data.data.list[i].type_nm+'\',\''+data.data.list[i].goods_price+'\',\''+data.data.list[i].low_price+'\',\''+data.data.list[i].remark+'\')"><font color=gray>['+data.data.list[i].type_nm+']</font>&nbsp;' +data.data.list[i].goods_name+
+							li.innerHTML = '<a class="mui-navigate-right" href="javascript:editGoods(\''+data.data.list[i].goods_id+'\',\''+data.data.list[i].goods_name+'\',\''+data.data.list[i].type_id+'\',\''+data.data.list[i].type_nm+'\',\''+data.data.list[i].goods_price+'\',\''+data.data.list[i].low_price+'\',\''+data.data.list[i].remark+'\',\''+data.data.list[i].pic_url+'\')"><font color=gray>['+data.data.list[i].type_nm+']</font>&nbsp;' +data.data.list[i].goods_name+
 							'<span>'+data.data.list[i].goods_price+'元</span></a>';  
 							table.appendChild(li);    
 						}
@@ -183,7 +183,7 @@
 				});
 			}
 			
-			function editGoods(goods_id,goods_name,type_id,type_nm,goods_price,low_price,remark) {
+			function editGoods(goods_id,goods_name,type_id,type_nm,goods_price,low_price,remark,pic_url) {
 //				console.log(goods_id);
 //				console.log(goods_name);
 //				console.log(type_id);
@@ -200,7 +200,8 @@
 				        type_nm:type_nm,
 				        goods_price:goods_price,
 				        low_price:low_price,
-				        remark:remark
+				        remark:remark,
+				        pic_url:pic_url
 					},
 					createNew:true
 				});
@@ -270,7 +271,7 @@
 							pageSize:12,
 							currentPage:++count,
 							type_id:typeId,  
-							keyword:keyword
+							keyword:encodeURIComponent(keyword)    
 						},
 						dataType:'json',//服务器返回json格式数据
 						type:'get',//HTTP请求类型
@@ -290,7 +291,7 @@
 								}
 								var li = document.createElement('li');
 								li.className = 'mui-table-view-cell';
-								li.innerHTML = '<a class="mui-navigate-right" href="javascript:editGoods(\''+data.data.list[i].goods_id+'\',\''+data.data.list[i].goods_name+'\',\''+data.data.list[i].type_id+'\',\''+data.data.list[i].type_nm+'\',\''+data.data.list[i].goods_price+'\',\''+data.data.list[i].low_price+'\',\''+data.data.list[i].remark+'\')"><font color=gray>['+data.data.list[i].type_nm+']</font>&nbsp;' +data.data.list[i].goods_name+
+								li.innerHTML = '<a class="mui-navigate-right" href="javascript:editGoods(\''+data.data.list[i].goods_id+'\',\''+data.data.list[i].goods_name+'\',\''+data.data.list[i].type_id+'\',\''+data.data.list[i].type_nm+'\',\''+data.data.list[i].goods_price+'\',\''+data.data.list[i].low_price+'\',\''+data.data.list[i].remark+'\',\''+data.data.list[i].pic_url+'\')"><font color=gray>['+data.data.list[i].type_nm+']</font>&nbsp;' +data.data.list[i].goods_name+
 								'<span style="padding-left:50px">'+data.data.list[i].goods_price+'元</span></a>';  
 								table.appendChild(li);        
 							}

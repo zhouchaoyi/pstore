@@ -53,10 +53,15 @@
 						<span id="takePhoto" class="mui-icon mui-icon-camera" style="font-size: 40px;color:dodgerblue"></span><span style="color:lightgray">(点此拍照)</span>
 					</div>
 					<br>
+					
+					<div style="text-align: center;">
+						<img id="goodsPic" src="" width="250px" height="300px" style="display:none"/>
+					</div>
 					<br>
 					<div class="mui-button-row">
-						<button type="button" class="mui-btn mui-btn-primary" onclick="doSubmit()">确认</button>&nbsp;&nbsp;
+						<button type="button" class="mui-btn mui-btn-primary" onclick="doSave()">确认</button>&nbsp;&nbsp;
 						<button type="button" class="mui-btn mui-btn-danger" style="display:none" onclick="doDelete()">删除</button>
+						  
 					</div>
 					
 				</form>
@@ -78,6 +83,8 @@
 			var goods_price="";
 			var low_price="";
 			var remark="";
+			var pic_url="";
+			var imgSrc="";
 			
 			mui.plusReady(function(){
 				var self = plus.webview.currentWebview();
@@ -95,6 +102,8 @@
 				goods_price=self.goods_price;
 				low_price=self.low_price;
 				remark=self.remark;
+				pic_url=self.pic_url;
+				console.log("pic_url="+pic_url);
 				
 				var typePicker =new mui.PopPicker();
 				var showTypePickerButton = document.getElementById('showTypePicker');
@@ -113,7 +122,32 @@
 					cmr.captureImage( function ( p ) {
 						console.log( "成功："+p );
 						plus.io.resolveLocalFileSystemURL( p, function ( entry ) {
-							console.log(entry.fullPath)
+							console.log(entry.fullPath);
+							var bitmap = new plus.nativeObj.Bitmap("test");
+							// 从本地加载Bitmap图片
+							bitmap.load(entry.fullPath,function(){
+								bitmap.save( entry.fullPath
+								,{
+									"overwrite":true,
+									"format":"png",
+									"quality":10  
+								}
+								,function(i){
+									console.log('保存图片成功：'+JSON.stringify(i));
+									var img=document.getElementById("goodsPic");
+									img.src=entry.fullPath;
+									imgSrc=entry.fullPath;
+									img.style.display="";
+									bitmap.clear();
+								}
+								,function(e){
+									console.log('保存图片失败：'+JSON.stringify(e));
+								});
+
+							},function(e){
+								console.log('加载图片失败：'+JSON.stringify(e));
+							});
+
 						}, function ( e ) {
 							console.log( "读取拍照文件错误："+e.message );
 						} );
@@ -130,6 +164,12 @@
 						//填充值
 						fillValue(goods_name,type_id,type_nm,goods_price,low_price,remark);
 						document.body.querySelector('.mui-btn-danger').style.display="";
+						if(pic_url!="") {
+							var img=document.getElementById("goodsPic");
+							img.src=pic_url;
+							//imgSrc=pic_url;
+							img.style.display="";  
+						}
 					}else {
 						
 						if(type_id.length>0) {
@@ -178,8 +218,7 @@
 				document.getElementById("remark").value=remark;
 			}
 			
-			
-			function doSubmit() {
+			function doSave() {
 				if(document.getElementById("goodsNm").value=="") {
 					alert("物品名称必填");
 					return;
@@ -201,8 +240,36 @@
 				        return;
 				    }
 				}
-				//document.getElementById("goodsNmHidden").value=encodeURIComponent(document.getElementById("goodsNm").value);
 				document.querySelector(".mui-btn-primary").disabled=true;  
+				if(imgSrc!="") {
+					var task = plus.uploader.createUpload(files_web, 
+						{ method:"POST",blocksize:0,priority:100 },
+						function ( t, status ) {
+							// 上传完成
+							if ( status == 200 ) { 
+								console.log( "Upload success: " + t.responseText );
+								doSubmit(files_path+t.responseText);
+								
+							} else {
+								console.log( "Upload failed: " + status );
+							}
+						}
+					);
+					task.addFile( imgSrc, {key:"img",name:"img.jpg"} );   
+					task.start();
+				}else {
+					if(goods_id.length>0) {
+						doSubmit(pic_url);
+					}else {  
+						doSubmit('');
+					}
+				}
+			}
+			
+			function doSubmit(picUrl) {
+				
+				//document.getElementById("goodsNmHidden").value=encodeURIComponent(document.getElementById("goodsNm").value);
+				
 				if(goods_id.length>0) {
 					mui.post(host+'storeMgmt/modifyGoods',{
 						goodsNm:encodeURIComponent(document.getElementById("goodsNm").value),
@@ -210,7 +277,8 @@
 						goodsPrice:document.getElementById("goodsPrice").value,
 						lowPrice:document.getElementById("lowPrice").value,
 						remark:encodeURIComponent(document.getElementById("remark").value),
-						goodsId:goods_id
+						goodsId:goods_id,
+						picUrl:picUrl
 					},function(data){
 						plus.nativeUI.toast('修改成功'); 
 						var webview=plus.webview.getWebviewById("tab-webview-subpage-goods.html");
@@ -229,7 +297,8 @@
 						goodsType:document.getElementById("showTypePicker").typeId,
 						goodsPrice:document.getElementById("goodsPrice").value,
 						lowPrice:document.getElementById("lowPrice").value,
-						remark:encodeURIComponent(document.getElementById("remark").value)
+						remark:encodeURIComponent(document.getElementById("remark").value),
+						picUrl:picUrl
 					},function(data){
 						plus.nativeUI.toast('新增成功');  
 						var webview=plus.webview.getWebviewById("tab-webview-subpage-goods.html");
