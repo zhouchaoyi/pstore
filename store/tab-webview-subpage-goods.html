@@ -79,13 +79,13 @@
 					goodsType="";
 				}else {
 					document.getElementById("showTypePicker").typeId=goodsType;
-					document.getElementById("showTypePicker").value=decodeURI(goodsTypeNm);
+					document.getElementById("showTypePicker").value=decodeURI(decodeURI(goodsTypeNm));
 				}
 				keyword=getQueryString("keyword");
 				if(null==keyword) {
 					keyword="";
 				}else {
-					keyword=decodeURI(keyword);
+					keyword=decodeURI(decodeURI(keyword));  
 					document.getElementById("searchText").value=keyword;
 				}
 				var typePicker =new mui.PopPicker();
@@ -137,6 +137,10 @@
 					});
 				}
 				
+//				var listCell = document.querySelectorAll(".mui-table-view-cell");
+//				listCell.addEventListener('tap', function(event) {
+//					
+//				}, false);
 			});
 			
 			//console.log(host+'storeMgmt/listGoods');
@@ -170,7 +174,7 @@
 							}
 							var li = document.createElement('li');
 							li.className = 'mui-table-view-cell';
-							li.innerHTML = '<a class="mui-navigate-right" href="javascript:editGoods(\''+data.data.list[i].goods_id+'\',\''+data.data.list[i].goods_name+'\',\''+data.data.list[i].type_id+'\',\''+data.data.list[i].type_nm+'\',\''+data.data.list[i].goods_price+'\',\''+data.data.list[i].low_price+'\',\''+data.data.list[i].remark+'\',\''+data.data.list[i].pic_url+'\')"><font color=gray>['+data.data.list[i].type_nm+']</font>&nbsp;' +data.data.list[i].goods_name+
+							li.innerHTML = '<a class="mui-navigate-right" onclick="editGoods(\''+data.data.list[i].goods_id+'\',\''+data.data.list[i].goods_name+'\',\''+data.data.list[i].type_id+'\',\''+data.data.list[i].type_nm+'\',\''+data.data.list[i].goods_price+'\',\''+data.data.list[i].low_price+'\',\''+data.data.list[i].remark+'\',\''+data.data.list[i].pic_url+'\')"><font color=gray>['+data.data.list[i].type_nm+']</font>&nbsp;' +data.data.list[i].goods_name+
 							'<span>'+data.data.list[i].goods_price+'元</span></a>';  
 							table.appendChild(li);    
 						}
@@ -291,7 +295,7 @@
 								}
 								var li = document.createElement('li');
 								li.className = 'mui-table-view-cell';
-								li.innerHTML = '<a class="mui-navigate-right" href="javascript:editGoods(\''+data.data.list[i].goods_id+'\',\''+data.data.list[i].goods_name+'\',\''+data.data.list[i].type_id+'\',\''+data.data.list[i].type_nm+'\',\''+data.data.list[i].goods_price+'\',\''+data.data.list[i].low_price+'\',\''+data.data.list[i].remark+'\',\''+data.data.list[i].pic_url+'\')"><font color=gray>['+data.data.list[i].type_nm+']</font>&nbsp;' +data.data.list[i].goods_name+
+								li.innerHTML = '<a class="mui-navigate-right" onclick="editGoods(\''+data.data.list[i].goods_id+'\',\''+data.data.list[i].goods_name+'\',\''+data.data.list[i].type_id+'\',\''+data.data.list[i].type_nm+'\',\''+data.data.list[i].goods_price+'\',\''+data.data.list[i].low_price+'\',\''+data.data.list[i].remark+'\',\''+data.data.list[i].pic_url+'\')"><font color=gray>['+data.data.list[i].type_nm+']</font>&nbsp;' +data.data.list[i].goods_name+
 								'<span style="padding-left:50px">'+data.data.list[i].goods_price+'元</span></a>';  
 								table.appendChild(li);        
 							}
